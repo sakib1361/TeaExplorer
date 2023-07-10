@@ -2,6 +2,7 @@
 using System;
 using System.Data;
 using System.IO;
+using System.Threading.Tasks;
 using System.Windows;
 using TeaTime;
 using Wpf.Ui.Controls;
@@ -29,26 +30,28 @@ namespace TeaExplorer
             }
         }
 
-        private void HandleFile(string file)
+        private async void HandleFile(string file)
         {
+            PBar.Visibility = Visibility.Visible;
             var ext = Path.GetExtension(file);
             if (ext == ".csv")
-                OpenCsvFile(file);
+                await OpenCsvFile(file);
             else if (ext == ".tea")
-                OpenTeaFile(file);
+               await OpenTeaFile(file);
+            PBar.Visibility = Visibility.Collapsed;
         }
 
-        private void OpenCsvFile(string fileName)
+        private async Task OpenCsvFile(string fileName)
         {
             using var reader = new StreamReader(fileName);
-            var header = reader.ReadLine();
+            var header = await reader.ReadLineAsync();
             if (header == null) return;
             var dt = new DataTable("MyTable");
             foreach (var sub in header.Split(',', StringSplitOptions.RemoveEmptyEntries|StringSplitOptions.TrimEntries))
             {
                 dt.Columns.Add(sub);
             }
-            while ((header = reader.ReadLine()) != null)
+            while ((header = await reader.ReadLineAsync()) != null)
             {
                 var dataRow = dt.NewRow();
                 var ct = 0;
@@ -63,26 +66,30 @@ namespace TeaExplorer
             MGrid.ItemsSource = dt.DefaultView;
         }
 
-        private void OpenTeaFile(string fileName)
+        private async Task OpenTeaFile(string fileName)
         {
             using var tea = TeaFile.OpenRead(fileName);
             var dt = new DataTable("MyTable");
-            foreach (var field in tea.Description.ItemDescription.Fields)
+            await Task.Run(() =>
             {
-                dt.Columns.Add(field.Name);
-            }
-            foreach (Item item in tea.Items)
-            {
-                var dataRow = dt.NewRow();
-                var ct = 0;
-                foreach (var cell in item.Values)
+                foreach (var field in tea.Description.ItemDescription.Fields)
                 {
-                    dataRow[ct] = cell;
-                    ct++;
+                    dt.Columns.Add(field.Name);
                 }
+                foreach (Item item in tea.Items)
+                {
+                    var dataRow = dt.NewRow();
+                    var ct = 0;
+                    foreach (var cell in item.Values)
+                    {
+                        dataRow[ct] = cell;
+                        ct++;
+                    }
 
-                dt.Rows.Add(dataRow);
-            }
+                    dt.Rows.Add(dataRow);
+                }
+            });
+            
             MGrid.DataContext = dt;
             MGrid.ItemsSource = dt.DefaultView;
         }

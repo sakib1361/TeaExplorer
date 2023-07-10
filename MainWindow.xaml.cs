@@ -2,8 +2,11 @@
 using System;
 using System.Data;
 using System.IO;
+using System.Linq;
 using System.Threading.Tasks;
 using System.Windows;
+using System.Windows.Controls;
+using System.Windows.Data;
 using TeaTime;
 using Wpf.Ui.Controls;
 
@@ -33,6 +36,8 @@ namespace TeaExplorer
         private async void HandleFile(string file)
         {
             PBar.Visibility = Visibility.Visible;
+            MGrid.ItemsSource = null;
+            MGrid.Columns.Clear();
             var ext = Path.GetExtension(file);
             if (ext == ".csv")
                 await OpenCsvFile(file);
@@ -43,55 +48,33 @@ namespace TeaExplorer
 
         private async Task OpenCsvFile(string fileName)
         {
-            using var reader = new StreamReader(fileName);
-            var header = await reader.ReadLineAsync();
-            if (header == null) return;
-            var dt = new DataTable("MyTable");
+            var reader = await File.ReadAllLinesAsync(fileName);
+            var header = reader[0];
+            
+            var head = 0;
             foreach (var sub in header.Split(',', StringSplitOptions.RemoveEmptyEntries|StringSplitOptions.TrimEntries))
             {
-                dt.Columns.Add(sub);
+                MGrid.Columns.Add(new DataGridTextColumn() { Header = sub, Binding = new Binding($"[{head}]") });
+                head++;
             }
-            while ((header = await reader.ReadLineAsync()) != null)
-            {
-                var dataRow = dt.NewRow();
-                var ct = 0;
-                foreach (var cell in header.Split(',', StringSplitOptions.RemoveEmptyEntries|StringSplitOptions.TrimEntries))
-                {
-                    dataRow[ct] = cell;
-                    ct++;
-                }
-                dt.Rows.Add(dataRow);
-            }
-            MGrid.DataContext = dt;
-            MGrid.ItemsSource = dt.DefaultView;
+            var allLines = reader.Skip(1).Select(x=>x.Split(',' , StringSplitOptions.TrimEntries|StringSplitOptions.RemoveEmptyEntries));
+            MGrid.ItemsSource = allLines;
         }
 
         private async Task OpenTeaFile(string fileName)
         {
             using var tea = TeaFile.OpenRead(fileName);
-            var dt = new DataTable("MyTable");
-            await Task.Run(() =>
+            var head = 0;
+            foreach (var field in tea.Description.ItemDescription.Fields)
             {
-                foreach (var field in tea.Description.ItemDescription.Fields)
-                {
-                    dt.Columns.Add(field.Name);
-                }
-                foreach (Item item in tea.Items)
-                {
-                    var dataRow = dt.NewRow();
-                    var ct = 0;
-                    foreach (var cell in item.Values)
-                    {
-                        dataRow[ct] = cell;
-                        ct++;
-                    }
-
-                    dt.Rows.Add(dataRow);
-                }
+                MGrid.Columns.Add(new DataGridTextColumn() { Header = field.Name, Binding = new Binding($"[{head}]") });
+                head++;
+            }
+            var dataSet = await Task.Run(() =>
+            {
+                return tea.Items.Select(x => x.Values).ToArray();
             });
-            
-            MGrid.DataContext = dt;
-            MGrid.ItemsSource = dt.DefaultView;
+            MGrid.ItemsSource = dataSet;
         }
 
 

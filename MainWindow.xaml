@@ -46,7 +46,7 @@
                   Margin="10,0"
                   ColumnWidth="*"
                   SelectionMode="Extended"
-                  AutoGenerateColumns="True"
+                  AutoGenerateColumns="False"
                   EnableRowVirtualization="True"
                   IsReadOnly="True" />
         <ui:ProgressRing HorizontalAlignment="Center"

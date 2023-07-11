@@ -20,6 +20,7 @@
         </Grid.RowDefinitions>
         <ui:TitleBar Title="WPF UI - Simple Demo"
                      Height="30" />
+      
         <Menu Grid.Row="1">
             <MenuItem Header="File">
                 <MenuItem Click="Open_Click"

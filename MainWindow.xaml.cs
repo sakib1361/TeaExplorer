@@ -58,7 +58,7 @@ namespace TeaExplorer
                 MGrid.Columns.Add(new DataGridTextColumn() { Header = sub, Binding = new Binding($"[{head}]") });
                 head++;
             }
-            var allLines = reader.Skip(1).Select(x=>x.Split(',' , StringSplitOptions.TrimEntries|StringSplitOptions.RemoveEmptyEntries));
+            var allLines = reader.Skip(1).Select(x=>x.Split(',' , StringSplitOptions.TrimEntries));
             MGrid.ItemsSource = allLines;
         }
 

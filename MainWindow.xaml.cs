@@ -35,6 +35,7 @@ namespace TeaExplorer
 
         private async void HandleFile(string file)
         {
+            this.Title = Path.GetFileName(file);
             PBar.Visibility = Visibility.Visible;
             MGrid.ItemsSource = null;
             MGrid.Columns.Clear();
@@ -52,7 +53,7 @@ namespace TeaExplorer
             var header = reader[0];
             
             var head = 0;
-            foreach (var sub in header.Split(',', StringSplitOptions.RemoveEmptyEntries|StringSplitOptions.TrimEntries))
+            foreach (var sub in header.Split(',', StringSplitOptions.TrimEntries))
             {
                 MGrid.Columns.Add(new DataGridTextColumn() { Header = sub, Binding = new Binding($"[{head}]") });
                 head++;

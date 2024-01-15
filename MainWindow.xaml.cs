@@ -3,6 +3,7 @@ using System;
 using System.Data;
 using System.IO;
 using System.Linq;
+using System.Reflection.PortableExecutable;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
@@ -51,15 +52,28 @@ namespace TeaExplorer
         {
             var reader = await File.ReadAllLinesAsync(fileName);
             var header = reader[0];
-            
+            var delimeter = FindDelimeter(header);
             var head = 0;
-            foreach (var sub in header.Split(',', StringSplitOptions.TrimEntries))
+            foreach (var sub in header.Split(delimeter, StringSplitOptions.TrimEntries))
             {
                 MGrid.Columns.Add(new DataGridTextColumn() { Header = sub, Binding = new Binding($"[{head}]") });
                 head++;
             }
-            var allLines = reader.Skip(1).Select(x=>x.Split(',' , StringSplitOptions.TrimEntries));
+            var allLines = reader.Skip(1).Select(x => x.Split(delimeter, StringSplitOptions.TrimEntries));
             MGrid.ItemsSource = allLines;
+        }
+
+        private char FindDelimeter(string line)
+        {
+            var seperator = new char[] { ',',  ' ' , '\t'};
+            foreach(var c in seperator)
+            {
+                var splits = line.Split(c, StringSplitOptions.RemoveEmptyEntries);
+                if(splits.Length>1) 
+                    return c;
+            }
+            return seperator[0];
+           
         }
 
         private async Task OpenTeaFile(string fileName)
